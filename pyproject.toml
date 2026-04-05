@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chainlit-crew-adapter"
-version = "0.1.0"
+version = "0.0.2"
 description = "Chainlit adapter for CrewAI step rendering and human-in-the-loop questions"
 readme = "README.md"
 requires-python = ">=3.10"

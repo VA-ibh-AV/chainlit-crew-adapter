@@ -19,6 +19,79 @@ It focuses on two things:
 - `ChainlitAskUserTool` for human-in-the-loop follow-up questions
 - examples for both step rendering and ask-user workflows
 
+## Usage
+
+### Installation from PyPI
+
+```bash
+pip install chainlit-crew-adapter
+```
+
+### Setup
+
+Before running the examples, set your OpenAI API credentials:
+
+```bash
+export OPENAI_API_KEY=your_openai_api_key
+export OPENAI_MODEL=gpt-4o-mini  # optional, defaults to gpt-4o-mini
+```
+
+### Example 1: Step Rendering
+
+Render CrewAI crew execution as Chainlit steps to see the full task and tool execution trace.
+
+```python
+import chainlit as cl
+from chainlit_crew_adapter import ChainlitCrewAdapter
+from your_crew import build_my_crew
+
+@cl.on_message
+async def main(message: cl.Message) -> None:
+    crew = build_my_crew()
+    adapter = ChainlitCrewAdapter(cl=cl, crew=crew)
+    result = await adapter.kickoff(inputs={"user_request": message.content})
+    await cl.Message(content=str(result)).send()
+```
+
+For a complete example, see [examples/steps_demo.py](examples/steps_demo.py).
+
+### Example 2: Human Follow-up Questions
+
+Enable the crew to ask users follow-up questions using the `ChainlitAskUserTool`.
+
+```python
+import chainlit as cl
+from chainlit_crew_adapter import ChainlitAskUserTool, ChainlitCrewAdapter
+from your_crew import build_ask_user_crew
+
+@cl.on_message
+async def main(message: cl.Message) -> None:
+    ask_user_tool = ChainlitAskUserTool(
+        timeout_seconds=180,
+        author="Crew Assistant"
+    )
+    crew = build_ask_user_crew(ask_user_tool=ask_user_tool)
+    adapter = ChainlitCrewAdapter(
+        cl=cl,
+        crew=crew,
+        show_agent_steps=False  # Cleaner trace without agent-level steps
+    )
+    result = await adapter.kickoff(inputs={"user_request": message.content})
+    await cl.Message(content=str(result)).send()
+```
+
+For a complete example, see [examples/ask_user_demo.py](examples/ask_user_demo.py).
+
+### Running the Examples
+
+```bash
+# Step rendering demo
+chainlit run examples/steps_demo.py
+
+# Human follow-up questions demo
+chainlit run examples/ask_user_demo.py
+```
+
 ## Installation
 
 ### Local development
@@ -44,29 +117,6 @@ OPENAI_MODEL=gpt-4o-mini
 
 `OPENAI_MODEL` is optional. The examples default to `gpt-4o-mini`.
 
-## Quick Start
-
-### Step rendering only
-
-```python
-import chainlit as cl
-from chainlit_crew_adapter import ChainlitCrewAdapter
-
-adapter = ChainlitCrewAdapter(cl=cl, crew=crew)
-result = await adapter.kickoff(inputs={"user_request": message.content})
-```
-
-### Human follow-up questions
-
-```python
-import chainlit as cl
-from chainlit_crew_adapter import ChainlitAskUserTool, ChainlitCrewAdapter
-
-ask_user_tool = ChainlitAskUserTool(timeout_seconds=180, author="Crew Assistant")
-crew = build_ask_user_demo_crew(ask_user_tool=ask_user_tool)
-adapter = ChainlitCrewAdapter(cl=cl, crew=crew, show_agent_steps=False)
-result = await adapter.kickoff(inputs={"user_request": message.content})
-```
 
 ## API
 
