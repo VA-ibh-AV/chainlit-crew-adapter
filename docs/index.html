@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>chainlit-crew-adapter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c10;
+    --bg2: #10141c;
+    --bg3: #161b26;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --muted: #8892a4;
+    --accent: #4ade80;
+    --accent2: #22d3ee;
+    --accent3: #a78bfa;
+    --code-bg: #0d1117;
+    --glow: rgba(74,222,128,0.15);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Grid bg texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ──── NAV ──── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    height: 60px;
+    background: rgba(10,12,16,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    border: 1px solid rgba(74,222,128,0.35);
+    padding: 6px 16px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  .nav-cta:hover { background: rgba(74,222,128,0.1); }
+
+  /* ──── HERO ──── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 7rem 2rem 4rem;
+    z-index: 1;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 400px;
+    background: radial-gradient(ellipse at center, rgba(74,222,128,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 100px;
+    border: 1px solid rgba(74,222,128,0.3);
+    background: rgba(74,222,128,0.07);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 2rem;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.4rem, 5.5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .word-chain { color: var(--accent2); }
+  .hero h1 .word-crew { color: var(--accent3); }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--muted);
+    max-width: 560px;
+    margin: 0 auto 2.5rem;
+    font-weight: 300;
+    line-height: 1.65;
+  }
+
+  .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0c10;
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: #86efac; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border2);
+  }
+  .btn-secondary:hover { background: var(--bg3); transform: translateY(-1px); }
+
+  /* ──── INSTALL STRIP ──── */
+  .install-strip {
+    position: relative; z-index: 1;
+    max-width: 480px;
+    margin: 3rem auto 0;
+    background: var(--code-bg);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .install-strip .prompt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .install-strip code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+  }
+  .copy-btn {
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--muted); font-size: 11px; padding: 4px 10px;
+    border-radius: 5px; cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--border2); }
+
+  /* ──── SECTION COMMON ──── */
+  section {
+    position: relative; z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(1.75rem, 3.5vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    line-height: 1.15;
+  }
+  .section-desc {
+    color: var(--muted);
+    font-size: 1.05rem;
+    max-width: 520px;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* ──── FEATURES ──── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 3.5rem;
+  }
+  .feature-card {
+    background: var(--bg2);
+    padding: 2rem;
+    transition: background 0.2s;
+  }
+  .feature-card:hover { background: var(--bg3); }
+  .feature-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 1.25rem;
+  }
+  .icon-green { background: rgba(74,222,128,0.1); }
+  .icon-cyan { background: rgba(34,211,238,0.1); }
+  .icon-purple { background: rgba(167,139,250,0.1); }
+  .icon-amber { background: rgba(251,191,36,0.1); }
+
+  .feature-card h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+  /* ──── HOW IT WORKS ──── */
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-top: 3.5rem;
+    flex-wrap: wrap;
+  }
+  .flow-node {
+    flex: 1;
+    min-width: 180px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    position: relative;
+  }
+  .flow-node .node-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  .flow-node h4 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+  .flow-node p { font-size: 12px; color: var(--muted); }
+  .flow-arrow {
+    width: 40px;
+    text-align: center;
+    color: var(--border2);
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ──── CODE TABS ──── */
+  .code-section { margin-top: 3.5rem; }
+  .tabs { display: flex; gap: 4px; margin-bottom: -1px; }
+  .tab {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: var(--bg2);
+    transition: all 0.15s;
+  }
+  .tab.active { color: var(--text); background: var(--code-bg); border-color: var(--border2); }
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border2);
+    border-radius: 0 12px 12px 12px;
+    overflow: hidden;
+    display: none;
+  }
+  .code-block.active { display: block; }
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .code-dot:nth-child(1) { background: #ff5f57; }
+  .code-dot:nth-child(2) { background: #febc2e; }
+  .code-dot:nth-child(3) { background: #28c840; }
+  .code-filename { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+  pre {
+    padding: 1.5rem;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+  }
+  .kw { color: #ff79c6; }
+  .fn { color: #50fa7b; }
+  .str { color: #f1fa8c; }
+  .cm { color: #6272a4; }
+  .imp { color: #8be9fd; }
+  .cls { color: #a78bfa; }
+  .dec { color: #ffb86c; }
+  .arg { color: var(--text); }
+
+  /* ──── API REFERENCE ──── */
+  .api-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3.5rem;
+  }
+  .api-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .api-card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .api-card-header h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .api-card-header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .api-params { padding: 1.25rem 1.5rem; }
+  .api-param {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .api-param:last-child { border-bottom: none; }
+  .param-name {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent2);
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .param-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    white-space: nowrap;
+  }
+  .param-desc { color: var(--muted); flex: 1; font-size: 12px; line-height: 1.5; }
+
+  /* ──── EXAMPLES ──── */
+  .examples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3.5rem;
+  }
+  .example-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 2rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .example-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+  .example-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-bottom: 1rem;
+  }
+  .tag-step { background: rgba(74,222,128,0.1); color: var(--accent); }
+  .tag-ask { background: rgba(167,139,250,0.1); color: var(--accent3); }
+  .example-card h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    letter-spacing: -0.01em;
+  }
+  .example-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+  .example-prompts { display: flex; flex-direction: column; gap: 6px; }
+  .prompt-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--muted);
+  }
+  .prompt-chip::before { content: '> '; color: var(--accent); }
+  .example-run {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 12px;
+  }
+
+  /* ──── FOOTER ──── */
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ──── SCROLLBAR ──── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ──── ANIMATIONS ──── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.7s ease both; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+
+  @media (max-width: 640px) {
+    nav { padding: 0 1.25rem; }
+    .nav-links { display: none; }
+    .flow-arrow { display: none; }
+    .flow-node { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">chainlit-crew-adapter</span>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#api">API</a></li>
+    <li><a href="#examples">Examples</a></li>
+  </ul>
+  <a class="nav-cta" href="https://github.com/VA-ibh-AV/chainlit-crew-adapter" target="_blank">GitHub ↗</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+
+  <div class="hero-badge fade-up">
+    <span class="badge-dot"></span>
+    pip install chainlit-crew-adapter
+  </div>
+
+  <h1 class="fade-up delay-1">
+    <span class="word-chain">Chainlit</span> meets<br>
+    <span class="word-crew">CrewAI</span> — beautifully.
+  </h1>
+
+  <p class="hero-sub fade-up delay-2">
+    A lightweight Python adapter that renders CrewAI crew execution as clean Chainlit steps and lets your agents ask users follow-up questions in real time.
+  </p>
+
+  <div class="hero-actions fade-up delay-3">
+    <a class="btn btn-primary" href="#usage">Get started</a>
+    <a class="btn btn-secondary" href="https://github.com/VA-ibh-AV/chainlit-crew-adapter" target="_blank">View on GitHub</a>
+  </div>
+
+  <div class="install-strip fade-up delay-4">
+    <span class="prompt">$</span>
+    <code id="install-cmd">pip install chainlit-crew-adapter</code>
+    <button class="copy-btn" onclick="copyInstall()">Copy</button>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <p class="section-label">What's included</p>
+  <h2 class="section-title">Everything you need,<br>nothing you don't.</h2>
+  <p class="section-desc">Purpose-built to bridge CrewAI's execution model with Chainlit's real-time chat UI — with a minimal, composable API.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon icon-green">🪜</div>
+      <h3>Step rendering</h3>
+      <p>Mirrors crew, task, agent, and tool events into Chainlit's native step tree. See exactly what your crew is doing, in real time.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-purple">💬</div>
+      <h3>Human-in-the-loop</h3>
+      <p><code>ChainlitAskUserTool</code> lets any CrewAI agent pause execution and ask the user follow-up questions through chat.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-cyan">⚡</div>
+      <h3>Async kickoff</h3>
+      <p><code>ChainlitCrewAdapter</code> wraps <code>crew.kickoff()</code> with full async support — no blocking, no workarounds needed.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon icon-amber">🔧</div>
+      <h3>Trace control</h3>
+      <p>Toggle <code>show_agent_steps=False</code> to suppress agent-level noise and keep traces clean for production use.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section>
+  <p class="section-label">How it works</p>
+  <h2 class="section-title">Simple flow.<br>Powerful results.</h2>
+
+  <div class="flow-diagram">
+    <div class="flow-node">
+      <p class="node-num">01</p>
+      <h4>User sends message</h4>
+      <p>Chainlit's <code>@cl.on_message</code> receives the prompt</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <p class="node-num">02</p>
+      <h4>Adapter kickoff</h4>
+      <p><code>ChainlitCrewAdapter.kickoff()</code> runs crew asynchronously</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <p class="node-num">03</p>
+      <h4>Events stream</h4>
+      <p>Crew, task, agent, and tool events render as Chainlit steps</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">
+      <p class="node-num">04</p>
+      <h4>Result returned</h4>
+      <p>Final output sent back as a Chainlit message</p>
+    </div>
+  </div>
+</section>
+
+<!-- USAGE / CODE TABS -->
+<section id="usage">
+  <p class="section-label">Quick start</p>
+  <h2 class="section-title">Up and running<br>in minutes.</h2>
+  <p class="section-desc">Two core patterns — step rendering for visibility, ask-user for interactive workflows.</p>
+
+  <div class="code-section">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('tab-steps', this)">Step rendering</div>
+      <div class="tab" onclick="switchTab('tab-ask', this)">Ask-user flow</div>
+    </div>
+
+    <div class="code-block active" id="tab-steps">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div>
+        </div>
+        <span class="code-filename">your_app.py</span>
+      </div>
+      <pre><span class="kw">import</span> <span class="imp">chainlit</span> <span class="kw">as</span> <span class="imp">cl</span>
+<span class="kw">from</span> <span class="imp">chainlit_crew_adapter</span> <span class="kw">import</span> <span class="cls">ChainlitCrewAdapter</span>
+<span class="kw">from</span> <span class="imp">your_crew</span> <span class="kw">import</span> <span class="fn">build_my_crew</span>
+
+<span class="dec">@cl.on_message</span>
+<span class="kw">async def</span> <span class="fn">main</span>(<span class="arg">message: cl.Message</span>) <span class="kw">-></span> <span class="cls">None</span>:
+    crew <span class="kw">=</span> <span class="fn">build_my_crew</span>()
+
+    adapter <span class="kw">=</span> <span class="cls">ChainlitCrewAdapter</span>(
+        cl<span class="kw">=</span>cl,
+        crew<span class="kw">=</span>crew,
+    )
+
+    result <span class="kw">=</span> <span class="kw">await</span> adapter.<span class="fn">kickoff</span>(
+        inputs<span class="kw">=</span>{<span class="str">"user_request"</span>: message.content}
+    )
+
+    <span class="kw">await</span> cl.<span class="cls">Message</span>(content<span class="kw">=</span><span class="fn">str</span>(result)).<span class="fn">send</span>()
+</pre>
+    </div>
+
+    <div class="code-block" id="tab-ask">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div>
+        </div>
+        <span class="code-filename">your_app.py</span>
+      </div>
+      <pre><span class="kw">import</span> <span class="imp">chainlit</span> <span class="kw">as</span> <span class="imp">cl</span>
+<span class="kw">from</span> <span class="imp">chainlit_crew_adapter</span> <span class="kw">import</span> (
+    <span class="cls">ChainlitAskUserTool</span>,
+    <span class="cls">ChainlitCrewAdapter</span>,
+)
+<span class="kw">from</span> <span class="imp">your_crew</span> <span class="kw">import</span> <span class="fn">build_ask_user_crew</span>
+
+<span class="dec">@cl.on_message</span>
+<span class="kw">async def</span> <span class="fn">main</span>(<span class="arg">message: cl.Message</span>) <span class="kw">-></span> <span class="cls">None</span>:
+    ask_user_tool <span class="kw">=</span> <span class="cls">ChainlitAskUserTool</span>(
+        timeout_seconds<span class="kw">=</span><span class="str">180</span>,
+        author<span class="kw">=</span><span class="str">"Crew Assistant"</span>,
+    )
+
+    crew <span class="kw">=</span> <span class="fn">build_ask_user_crew</span>(ask_user_tool<span class="kw">=</span>ask_user_tool)
+
+    adapter <span class="kw">=</span> <span class="cls">ChainlitCrewAdapter</span>(
+        cl<span class="kw">=</span>cl,
+        crew<span class="kw">=</span>crew,
+        show_agent_steps<span class="kw">=</span><span class="str">False</span>,  <span class="cm"># cleaner trace</span>
+    )
+
+    result <span class="kw">=</span> <span class="kw">await</span> adapter.<span class="fn">kickoff</span>(
+        inputs<span class="kw">=</span>{<span class="str">"user_request"</span>: message.content}
+    )
+
+    <span class="kw">await</span> cl.<span class="cls">Message</span>(content<span class="kw">=</span><span class="fn">str</span>(result)).<span class="fn">send</span>()
+</pre>
+    </div>
+  </div>
+</section>
+
+<!-- API -->
+<section id="api">
+  <p class="section-label">API reference</p>
+  <h2 class="section-title">Two classes.<br>Clean interface.</h2>
+
+  <div class="api-cards">
+    <div class="api-card">
+      <div class="api-card-header">
+        <h3>ChainlitCrewAdapter</h3>
+        <p>Runs your crew and mirrors events to Chainlit steps</p>
+      </div>
+      <div class="api-params">
+        <div class="api-param">
+          <div>
+            <div class="param-name">cl</div>
+            <div class="param-type">SupportsChainlit</div>
+          </div>
+          <div class="param-desc">The Chainlit module instance</div>
+        </div>
+        <div class="api-param">
+          <div>
+            <div class="param-name">crew</div>
+            <div class="param-type">Crew</div>
+          </div>
+          <div class="param-desc">Your CrewAI crew instance</div>
+        </div>
+        <div class="api-param">
+          <div>
+            <div class="param-name">inputs</div>
+            <div class="param-type">Mapping | None</div>
+          </div>
+          <div class="param-desc">Optional default inputs for kickoff</div>
+        </div>
+        <div class="api-param">
+          <div>
+            <div class="param-name">show_agent_steps</div>
+            <div class="param-type">bool = True</div>
+          </div>
+          <div class="param-desc">Toggle agent-level step rendering</div>
+        </div>
+        <div class="api-param">
+          <div>
+            <div class="param-name">await kickoff()</div>
+            <div class="param-type">async method</div>
+          </div>
+          <div class="param-desc">Runs crew and streams steps. Accepts optional <code>inputs</code> override.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="api-card">
+      <div class="api-card-header">
+        <h3>ChainlitAskUserTool</h3>
+        <p>Gives agents the ability to pause and ask the user questions</p>
+      </div>
+      <div class="api-params">
+        <div class="api-param">
+          <div>
+            <div class="param-name">timeout_seconds</div>
+            <div class="param-type">int = 120</div>
+          </div>
+          <div class="param-desc">How long to wait for a user response</div>
+        </div>
+        <div class="api-param">
+          <div>
+            <div class="param-name">author</div>
+            <div class="param-type">str</div>
+          </div>
+          <div class="param-desc">Display name shown in the chat UI</div>
+        </div>
+        <div class="api-param">
+          <div>
+            <div class="param-name">fail_on_timeout</div>
+            <div class="param-type">bool = False</div>
+          </div>
+          <div class="param-desc">Raise an error or gracefully continue on timeout</div>
+        </div>
+        <div class="api-param">
+          <div>
+            <div class="param-name">ask_user</div>
+            <div class="param-type">callable | None</div>
+          </div>
+          <div class="param-desc">Override for custom ask-user implementation</div>
+        </div>
+        <div class="api-param">
+          <div>
+            <div class="param-name">chainlit_context</div>
+            <div class="param-type">context | None</div>
+          </div>
+          <div class="param-desc">Pass explicit Chainlit context if needed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXAMPLES -->
+<section id="examples">
+  <p class="section-label">Example apps</p>
+  <h2 class="section-title">See it in action.</h2>
+  <p class="section-desc">Two complete demos included — clone the repo and run them in seconds.</p>
+
+  <div class="examples-grid">
+    <div class="example-card">
+      <span class="example-tag tag-step">Step rendering</span>
+      <h3>Steps demo</h3>
+      <p>Renders full task, agent, and tool execution as Chainlit steps using a real JSONPlaceholder API workflow.</p>
+      <div class="example-prompts">
+        <div class="prompt-chip">Analyze post 5</div>
+        <div class="prompt-chip">Summarize post 12</div>
+      </div>
+      <div class="example-run">
+        $ chainlit run examples/steps_demo.py
+      </div>
+    </div>
+
+    <div class="example-card">
+      <span class="example-tag tag-ask">Human-in-the-loop</span>
+      <h3>Ask-user demo</h3>
+      <p>Demonstrates interactive follow-up questions during crew execution with a compact step trace.</p>
+      <div class="example-prompts">
+        <div class="prompt-chip">Help me plan a product launch</div>
+        <div class="prompt-chip">I need a landing page brief</div>
+      </div>
+      <div class="example-run">
+        $ chainlit run examples/ask_user_demo.py
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p style="margin-bottom: 0.5rem;">
+    Built with ♥ · <a href="https://github.com/VA-ibh-AV/chainlit-crew-adapter" target="_blank">GitHub</a> · <a href="https://pypi.org/project/chainlit-crew-adapter/" target="_blank">PyPI</a>
+  </p>
+  <p style="font-size: 12px; color: var(--border2);">MIT License · chainlit-crew-adapter</p>
+</footer>
+
+<script>
+  function switchTab(id, el) {
+    document.querySelectorAll('.code-block').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function copyInstall() {
+    navigator.clipboard.writeText('pip install chainlit-crew-adapter').then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+</script>
+</body>
+</html>
