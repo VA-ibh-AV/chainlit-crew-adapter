@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chainlit-crew-adapter"
+version = "0.1.0"
+description = "Chainlit adapter for CrewAI step rendering and human-in-the-loop questions"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Vaibhav" }]
+dependencies = [
+  "chainlit",
+  "crewai",
+]
+keywords = ["chainlit", "crewai", "agents", "tooling"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["chainlit_crew_adapter*"]
+
+[tool.setuptools.package-data]
+chainlit_crew_adapter = ["py.typed"]
